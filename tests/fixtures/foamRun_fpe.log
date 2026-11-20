@@ -1,0 +1,6 @@
+Time = 37s
+
+smoothSolver:  Solving for Ux, Initial residual = 0.9, Final residual = 0.08, No Iterations 1000
+#0  Foam::error::printStack(Foam::Ostream&) at ??:?
+#1  Foam::sigFpe::sigHandler(int) at ??:?
+Floating point exception (core dumped)

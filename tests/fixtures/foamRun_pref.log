@@ -1,0 +1,10 @@
+Starting time loop
+
+--> FOAM FATAL ERROR:
+Unable to set reference cell for field p
+    Please supply either pRefCell or pRefPoint
+
+    From function void Foam::setRefCell(...)
+    in file cfdTools/general/findRefCell/findRefCell.C at line 77.
+
+FOAM exiting

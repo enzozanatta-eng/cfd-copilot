@@ -1,0 +1,16 @@
+Starting time loop
+
+
+
+--> FOAM FATAL IO ERROR:
+Attempt to return dictionary entry as a primitive
+
+file: /home/user/runs/cavity-re100/system/functions/centreline/sets from line 40 to line 44.
+
+    From function virtual Foam::ITstream& Foam::dictionaryEntry::stream() const
+    in file db/dictionary/dictionaryEntry/dictionaryEntry.C at line 83.
+
+FOAM aborting
+
+#0  Foam::error::printStack(Foam::Ostream&) at ??:?
+#1  Foam::IOerror::abort() at ??:?
