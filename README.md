@@ -22,10 +22,10 @@ reports these as cryptic errors, or does not report them at all.
 4. **Failure diagnosis.** Known OpenFOAM error signatures are mapped to a
    cause and a concrete fix.
 
-Next on the roadmap is the LLM layer: turning a plain-language request into a
-spec, and explaining failures the rules do not recognise. The deterministic
-core above is what keeps that layer honest: every LLM output goes through the
-same validation and checks.
+5. **Plain-language requests (LLM).** `cfdc ask` turns a request into a spec.
+   The model proposes, the physics checks dispose: every proposal goes through
+   the same validation as a hand-written spec, and rejections are sent back to
+   the model with the reason so it can correct itself.
 
 ## Quick start
 
@@ -57,10 +57,62 @@ seconds on a laptop. Centreline velocity against the benchmark:
 
 <p align="center"><img src="docs/centreline.png" width="420"></p>
 
+## Asking in plain language
+
+```bash
+pip install -e ".[llm]"
+export ANTHROPIC_API_KEY=...   # or OPENAI_API_KEY=...
+cfdc ask "lid-driven cavity at Re 1000, compare with the literature" --run
+```
+
+Real output (OpenAI `gpt-4.1-mini`, OpenFOAM 12):
+
+```
+Spec (1 attempt(s)):
+case: lid_driven_cavity
+name: cavity-re1000
+reynolds: 1000.0
+cells: 128
+solver:
+  max_iterations: 2000
+  residual_target: 1.0e-05
+
+[ OK ] mesh: checkMesh: 16384 cells, 0 failed checks
+[ OK ] mesh: non-orthogonality: max 0.0 deg (warn > 65, fail > 80)
+[ OK ] mesh: skewness: max 0.00 (warn > 2, fail > 4)
+[ OK ] run: finished: solver reached End
+[ OK ] run: convergence: residuals below 1e-05 after 660 iterations
+[ OK ] run: continuity: local continuity error 1.48e-07 (warn > 1e-6, fail > 1e-4)
+[ OK ] validation: Ghia 1982, Re=1000: RMS error 0.0029, max 0.0048 (warn > 0.02, fail > 0.05)
+
+Overall: PASS  (report: runs/cavity-re1000/report.md)
+```
+
+Requests outside what the tool supports are declined instead of guessed:
+
+```
+$ cfdc ask "3D turbulent flow over a truck"
+Cannot build this: Requested case is 3D turbulent flow over a truck, which is not supported.
+Only 2D laminar lid-driven cavity is supported.
+Closest supported case: 2D laminar lid-driven cavity
+```
+
+If a proposal is physically inconsistent (for example, a mesh too coarse for
+the Reynolds number), the validator rejects it and the model gets the reason
+back as a tool error, then corrects the spec. This loop is covered by the
+tests with a scripted model.
+
+The LLM sits behind a small provider-neutral `LLMClient` protocol (Anthropic
+and OpenAI implementations, picked by whichever API key is set or with
+`--provider`). The agent logic keeps a neutral conversation history and each
+provider converts it to its own wire format, so the tests drive the agent with
+a scripted fake model: no API key or network in CI.
+
 ## Commands
 
 | Command | What it does |
 |---|---|
+| `cfdc ask "..." [--run]` | plain-language request -> validated spec (LLM) |
 | `cfdc new --name cav --re 100 -o cav.yaml` | create a validated spec |
 | `cfdc validate cav.yaml` | check a spec without running anything |
 | `cfdc build cav.yaml` | write the OpenFOAM case only |
@@ -104,6 +156,8 @@ foam/logs.py   pure parsers for solver and checkMesh logs
 checks.py      PASS/WARN/FAIL grading
 diagnose.py    error signature -> cause + fix
 pipeline.py    spec -> case -> run -> checks -> report
+llm.py         provider-neutral LLMClient protocol; Anthropic and OpenAI (tool use)
+ask.py         request -> proposal -> validation -> feedback loop
 ```
 
 The OpenFOAM runner sits behind a protocol, so the whole pipeline is tested in
@@ -111,7 +165,7 @@ CI with recorded logs and no OpenFOAM installation.
 
 ## Roadmap
 
-- [ ] `cfdc ask "..."`: plain-language request -> spec (LLM, validated by the same rules)
+- [x] `cfdc ask "..."`: plain-language request -> spec (LLM, validated by the same rules)
 - [ ] LLM explanation for failures with no matching rule
 - [ ] Cylinder in cross-flow (Strouhal number vs. published data)
 - [ ] Automatic mesh-independence study with GCI
