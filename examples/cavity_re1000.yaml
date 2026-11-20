@@ -1,0 +1,8 @@
+# Re = 1000 needs a finer mesh: the spec validator rejects fewer than 126 cells per side
+case: lid_driven_cavity
+name: cavity-re1000
+reynolds: 1000
+cells: 160
+solver:
+  max_iterations: 6000
+  residual_target: 1.0e-05
