@@ -19,6 +19,7 @@ dependencies = [
 
 [project.optional-dependencies]
 plot = ["matplotlib>=3.7"]
+llm = ["anthropic>=0.40", "openai>=1.40"]
 dev = ["pytest>=7.4", "ruff>=0.4", "matplotlib>=3.7"]
 
 [project.scripts]
